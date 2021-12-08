@@ -1,6 +1,7 @@
 module HasktorchSkeleton
-       ( someFunc
-       ) where
+  ( someFunc,
+  )
+where
 
 import Torch.Typed.NN ()
 

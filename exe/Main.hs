@@ -1,6 +1,6 @@
 module Main where
 
-import HasktorchSkeleton
+import Autoencoder
 
 main :: IO ()
-main = putStrLn "Hello Hasktorch!"
+main = trainLoop

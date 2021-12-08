@@ -1,0 +1,6 @@
+cradle:
+  cabal:
+    - path: "./src"
+      component: "lib:hasktorch-skeleton"
+    - path: "./exe"
+      component: "exe:server"

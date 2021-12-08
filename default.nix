@@ -1,12 +1,12 @@
 ############################################################################
-# hasktorch-skeleton Nix build
+# fauveal-subspace Nix build
 ############################################################################
 
 { system ? builtins.currentSystem
 , crossSystem ? null
 # allows to customize ghc and profiling (see ./nix/haskell.nix):
 , config ? {}
-# allows to override dependencies of the hasktorch-skeleton project without modifications
+# allows to override dependencies of the fauveal-subspace project without modifications
 , sourcesOverride ? {}
 # If true, activates CUDA support
 , cudaSupport ? false

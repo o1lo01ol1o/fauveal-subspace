@@ -29,8 +29,8 @@ let
   stack-shell = haskell.lib.buildStackProject rec {
     inherit ghc;
 
-    name = "hasktorch-skeleton-stack-dev-shell";
-    
+    name = "fauveal-subspace-stack-dev-shell";
+
     extraArgs = [
       "--extra-include-dirs=${torch}/include/torch/csrc/api/include"
     ];
@@ -40,7 +40,7 @@ let
     phases = ["nobuildPhase"];
     nobuildPhase = "echo '${lib.concatStringsSep "\n" ([ghc] ++ buildInputs)}' > $out";
     meta.platforms = lib.platforms.unix;
-    
+
     inherit withHoogle;
   };
 
