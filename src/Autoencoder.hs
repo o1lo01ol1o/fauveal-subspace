@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Autoencoder where
 
@@ -15,7 +16,7 @@ import Torch
     Linear,
     LinearSpec (LinearSpec),
     Optimizer (runStep),
-    Parameterized,
+    Parameterized (flattenParameters),
     Randomizable (..),
     Tensor,
     Tri (Upper),
@@ -27,6 +28,7 @@ import Torch
     linear,
     matmul,
     mean,
+    mkAdam,
     mseLoss,
     pow,
     randnIO',
@@ -38,6 +40,8 @@ import Torch
     stack,
     sumAll,
   )
+import Torch.Serialize (saveParams)
+import Torch.Tensor (asValue)
 import Prelude hiding (exp)
 
 -- Model Specification
@@ -100,6 +104,9 @@ model VAEState {..} input = do
   let output = mlp decoderState nonlinearity z
   pure $ ModelOutput output mu logvar
 
+projectLatent :: VAEState -> Tensor -> Tensor
+projectLatent VAEState {..} = mlp decoderState nonlinearity
+
 -- | MLP helper function for model used by both encoder & decoder
 mlp :: [Linear] -> (Tensor -> Tensor) -> Tensor -> Tensor
 mlp mlpState nonlin input = foldl' revApply input layerFunctionsList
@@ -133,6 +140,9 @@ makeModel dataDim hDim zDim =
         nonlinearitySpec = relu
       }
 
+shouldSave :: Tensor -> [Tensor] -> Bool
+shouldSave loss losses = asValue @Float (mean (stack (Dim 0) (loss : losses))) < asValue (mean (stack (Dim 0) losses))
+
 trainLoop :: IO ()
 trainLoop = do
   losses <- newIORef []
@@ -149,9 +159,12 @@ trainLoop = do
         loss = vaeLoss reconX input muVal logvarVal
     losses' <- readIORef losses
     writeIORef losses (loss : losses')
-    when (i `mod` 100 == 0) $
-      print (mean $ stack (Dim 0) losses')
-    (new_flat_parameters, _) <- runStep vaeState optimizer loss 1e-8
+    when (i `mod` 100 == 0) $ do
+      print (mean $ stack (Dim 0) (loss : losses'))
+      if shouldSave loss losses'
+        then saveParams vaeState "/Users/timpierson/arity/fauveal-subspace/data/models/vaeState.pt"
+        else pure ()
+    (new_flat_parameters, _) <- runStep vaeState (optimizer vaeState) loss 1e-3
     pure new_flat_parameters
   putStrLn "Done"
   where
@@ -160,7 +173,7 @@ trainLoop = do
     hDim = 16 * 21 -- hidden layer dimensions
     zDim = 16 -- latent space (z) dimensions
     -- optimization parameters
-    optimizer = GD
+    optimizer m = mkAdam 0 0.9 0.999 (flattenParameters m)
     nSamples = 937
     batchSize = 256 -- TODO - crashes for case where any batch is of size n=1
     numIters = 60000

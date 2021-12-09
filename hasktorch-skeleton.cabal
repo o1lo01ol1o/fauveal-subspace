@@ -48,10 +48,19 @@ library
 executable server
   import: binary-base
   main-is: Main.hs
-  hs-source-dirs: exe
+  hs-source-dirs: serve
   build-depends:     hasktorch-skeleton,
        libtorch-ffi
                      , aeson
                      , servant-server
                      , serialise
                      , warp
+
+
+executable train
+  import: binary-base
+  main-is: Main.hs
+  hs-source-dirs: train
+  build-depends:     hasktorch-skeleton,
+       libtorch-ffi
+
