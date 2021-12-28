@@ -22,14 +22,17 @@ import Torch
     Tri (Upper),
     cat,
     cholesky,
+    div,
     divScalar,
     exp,
     foldLoop,
     linear,
     matmul,
     mean,
+    min,
     mkAdam,
     mseLoss,
+    mulScalar,
     pow,
     randnIO',
     randnLikeIO,
@@ -38,7 +41,10 @@ import Torch
     slice,
     squeezeAll,
     stack,
+    std,
+    subScalar,
     sumAll,
+    tanh,
   )
 import Torch.Serialize (saveParams)
 import Torch.Tensor (asValue)
@@ -105,7 +111,7 @@ model VAEState {..} input = do
   pure $ ModelOutput output mu logvar
 
 projectLatent :: VAEState -> Tensor -> Tensor
-projectLatent VAEState {..} = mlp decoderState nonlinearity
+projectLatent VAEState {..} = outputNormalize . mlp decoderState nonlinearity
 
 -- | MLP helper function for model used by both encoder & decoder
 mlp :: [Linear] -> (Tensor -> Tensor) -> Tensor -> Tensor
@@ -133,47 +139,61 @@ makeModel :: Int -> Int -> Int -> IO VAEState
 makeModel dataDim hDim zDim =
   sample
     VAESpec
-      { encoderSpec = [LinearSpec dataDim hDim],
+      { encoderSpec = [LinearSpec dataDim hDim, LinearSpec hDim hDim],
         muSpec = LinearSpec hDim zDim,
         logvarSpec = LinearSpec hDim zDim,
-        decoderSpec = [LinearSpec zDim hDim, LinearSpec hDim dataDim],
+        decoderSpec = [LinearSpec zDim hDim, LinearSpec hDim hDim, LinearSpec hDim dataDim],
         nonlinearitySpec = relu
       }
 
 shouldSave :: Tensor -> [Tensor] -> Bool
-shouldSave loss losses = asValue @Float (mean (stack (Dim 0) (loss : losses))) < asValue (mean (stack (Dim 0) losses))
+shouldSave _ [] = False
+shouldSave loss losses = asValue @Float loss < minimum (asValue @Float <$> losses)
+
+inputNormalize :: Tensor -> Tensor
+inputNormalize x = mulScalar (1 / 321.5480 :: Float) (subScalar (161.4414 :: Float) x)
+
+outputNormalize :: Tensor -> Tensor
+outputNormalize x = subScalar (negate 161.4414 :: Float) (mulScalar (321.5480 :: Float) x)
 
 trainLoop :: IO ()
 trainLoop = do
   losses <- newIORef []
   dat' <- dataSet
   init <- makeModel dataDim hDim zDim
-  trained <- foldLoop init numIters $ \vaeState i -> do
+  trained <- do
     dat <- dataTensor <$> ImageClusterSampler.shuffle dat'
-    let startIndex = mod (batchSize * i) nSamples
-        endIndex = Prelude.min (startIndex + batchSize) nSamples
-        input = slice 0 startIndex endIndex 1 dat -- size should be [batchSize, dataDim]
-    output <- model vaeState (divScalar (255 :: Float) input)
-    -- print output
-    let (reconX, muVal, logvarVal) = (squeezeAll $ recon output, mu output, logvar output)
-        loss = vaeLoss reconX input muVal logvarVal
-    losses' <- readIORef losses
-    writeIORef losses (loss : losses')
-    when (i `mod` 100 == 0) $ do
-      print (mean $ stack (Dim 0) (loss : losses'))
+    print $ mean dat
+    print $ std dat
+    foldLoop init numIters $ \vaeState i -> do
+      dat <- dataTensor <$> ImageClusterSampler.shuffle dat'
+      let startIndex = mod (batchSize * i) nSamples
+          endIndex = Prelude.min (startIndex + batchSize) nSamples
+          input = slice 0 startIndex endIndex 1 dat -- size should be [batchSize, dataDim]
+      output <- model vaeState (inputNormalize input)
+      -- print output
+      let (reconX, muVal, logvarVal) = (squeezeAll $ recon output, mu output, logvar output)
+          loss = vaeLoss reconX input muVal logvarVal
+      losses' <- readIORef losses
+      when (i `mod` 100 == 0) $ do
+        print (mean $ stack (Dim 0) (loss : losses'))
+        print $ mseLoss input reconX
       if shouldSave loss losses'
-        then saveParams vaeState "/Users/timpierson/arity/fauveal-subspace/data/models/vaeState.pt"
+        then do
+          saveParams vaeState "/Users/timpierson/arity/fauveal-subspace/data/models/vaeState.pt"
+          putStrLn "Saved."
         else pure ()
-    (new_flat_parameters, _) <- runStep vaeState (optimizer vaeState) loss 1e-3
-    pure new_flat_parameters
+      writeIORef losses (loss : losses')
+      (new_flat_parameters, _) <- runStep vaeState (optimizer vaeState) loss 1e-3
+      pure new_flat_parameters
   putStrLn "Done"
   where
     -- model parameters
     dataDim = 4 * 21
-    hDim = 16 * 21 -- hidden layer dimensions
-    zDim = 16 -- latent space (z) dimensions
+    hDim = 22 * 21 -- hidden layer dimensions
+    zDim = 8 -- latent space (z) dimensions
     -- optimization parameters
     optimizer m = mkAdam 0 0.9 0.999 (flattenParameters m)
     nSamples = 937
-    batchSize = 256 -- TODO - crashes for case where any batch is of size n=1
+    batchSize = 512 -- TODO - crashes for case where any batch is of size n=1
     numIters = 60000

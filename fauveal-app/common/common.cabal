@@ -1,0 +1,51 @@
+name: common
+version: 0.1
+cabal-version: >= 1.2
+build-type: Simple
+
+library
+  hs-source-dirs: src
+  build-depends: adjunctions
+    , aeson
+    , adjunctions
+    , aeson-gadt-th
+    , base
+    , bytestring
+    , constraints
+    , distributive
+    , constraints-extras
+    , containers
+    , data-default
+    , database-id-class
+    , deepseq
+    , dependent-map
+    , dependent-sum
+    , dependent-sum-template
+    , either
+    , exceptions
+    , generic-data
+    , fin
+    , lens
+    , monoidal-containers
+    , mtl
+    , obelisk-route
+    , random
+    , reflex
+    , reflex-dom-core
+    , rhyolite-aeson-orphans
+    , rhyolite-common
+    , semialign
+    , semigroups
+    , some
+    , text
+    , these
+    , time
+    , transformers-base
+    , universe
+    , universe-base
+    , vec
+    , witherable
+  exposed-modules:
+    Common.App
+    Common.Route
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits

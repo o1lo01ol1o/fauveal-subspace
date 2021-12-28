@@ -16,6 +16,7 @@ let
       pynndescent>=0.5
       tbb>=2019.0
       tqdm
+      eth-account
       click
       umap-learn>=0.5.0
       pillow

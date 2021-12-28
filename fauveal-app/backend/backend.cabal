@@ -1,0 +1,69 @@
+name: backend
+version: 0.1
+cabal-version: >= 1.8
+build-type: Simple
+
+library
+  hs-source-dirs: src
+  if impl(ghcjs)
+    buildable: False
+  build-depends: async
+    , aeson
+    , adjunctions
+    , distributive
+    , base
+    , bytestring
+    , containers
+    , common
+    , servant-client
+    , dependent-map
+    , directory
+    , lens
+    , constraints-extras
+    , obelisk-route
+    , aeson-gadt-th
+    , servant-client-core
+    , resource-pool
+    , obelisk-backend
+    , servant
+    , snap-core
+    , monad-logger
+    , monoidal-containers           >=0.6
+    , random
+    , rhyolite-backend
+    , rhyolite-common
+    , dependent-sum-template
+    , postgresql-simple
+    , text
+    , gargoyle-postgresql-connect
+    , fin
+    , stm
+    , tls
+    , dependent-sum
+    , mtl
+    , safe-exceptions
+    , exceptions
+    , http-client
+    , x509-store
+    , x509-system
+    , vec
+  exposed-modules:
+    Backend
+    Backend.NotifyHandler
+    Backend.RequestHandler
+    Backend.Schema
+    Backend.Transaction
+    Backend.ViewSelectorHandler
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
+
+executable backend
+  main-is: main.hs
+  hs-source-dirs: src-bin
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -threaded -fno-show-valid-hole-fits
+  if impl(ghcjs)
+    buildable: False
+  build-depends: base
+               , backend
+               , common
+               , frontend
+               , obelisk-backend

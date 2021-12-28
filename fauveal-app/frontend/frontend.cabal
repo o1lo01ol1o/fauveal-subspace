@@ -1,0 +1,67 @@
+name: frontend
+version: 0.1
+cabal-version: >= 1.8
+build-type: Simple
+
+library
+  hs-source-dirs: src
+  build-depends: aeson
+    , base
+    , bytestring
+    , common
+    , constraints
+    , constraints-extras
+    , containers
+    , data-default
+    , dependent-map
+    , dependent-sum
+    , dependent-sum-template
+    , exception-transformers
+    , exceptions
+    , ghcjs-dom
+    , jsaddle
+    , lens
+    , monoidal-containers
+    , monad-control
+    , MonadRandom
+    , mtl
+    , foldl
+    , network-uri
+    , obelisk-executable-config-lookup
+    , obelisk-frontend
+    , obelisk-generated-static
+    , obelisk-route
+    , random
+    , reflex
+    , reflex-dom
+    , reflex-dom-core
+    , rhyolite-common
+    , rhyolite-frontend
+    , semialign
+    , some
+    , text
+    , these
+    , time
+    , transformers
+    , transformers-base
+    , universe-dependent-sum
+  exposed-modules:
+    Frontend
+  ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
+
+executable frontend
+  main-is: main.hs
+  hs-source-dirs: src-bin
+  build-depends: base
+               , common
+               , obelisk-frontend
+               , obelisk-route
+               , reflex-dom
+               , obelisk-generated-static
+               , frontend
+  ghc-options: -threaded -O -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -fno-show-valid-hole-fits
+  if impl(ghcjs)
+    ghc-options: -dedupe
+    cpp-options: -DGHCJS_BROWSER
+  if os(darwin)
+    ghc-options: -dynamic
