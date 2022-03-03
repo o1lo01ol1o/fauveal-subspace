@@ -16,6 +16,12 @@ library
     , dependent-map
     , dependent-sum
     , dependent-sum-template
+    , diagrams
+    , diagrams-lib
+    , diagrams-svg
+    , diagrams-contrib
+    , svg-builder
+    , hashable
     , exception-transformers
     , exceptions
     , ghcjs-dom
@@ -25,15 +31,18 @@ library
     , monad-control
     , MonadRandom
     , mtl
+    , base64-bytestring
     , foldl
     , network-uri
     , obelisk-executable-config-lookup
     , obelisk-frontend
     , obelisk-generated-static
     , obelisk-route
+    , primitive
     , random
     , reflex
     , reflex-dom
+    , ref-tf
     , reflex-dom-core
     , rhyolite-common
     , rhyolite-frontend
@@ -47,6 +56,10 @@ library
     , universe-dependent-sum
   exposed-modules:
     Frontend
+    Frontend.Common
+    Frontend.Layout
+    Frontend.Layout.Edge
+    Frontend.I18n
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits
 
 executable frontend

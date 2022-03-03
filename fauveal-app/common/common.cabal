@@ -12,21 +12,28 @@ library
     , base
     , bytestring
     , constraints
-    , distributive
     , constraints-extras
     , containers
+    , distributive
     , data-default
     , database-id-class
     , deepseq
+    , base64-bytestring
     , dependent-map
     , dependent-sum
     , dependent-sum-template
+    , hashable
+    , diagrams
+    , diagrams-lib
+    , diagrams-svg
+    , diagrams-contrib
     , either
     , exceptions
     , generic-data
     , fin
     , lens
     , monoidal-containers
+    , monad-control
     , mtl
     , obelisk-route
     , random
@@ -38,14 +45,24 @@ library
     , semigroups
     , some
     , text
+    , tf-random
     , these
     , time
+    , timezone-series
     , transformers-base
     , universe
     , universe-base
+    , uuid-types
     , vec
     , witherable
   exposed-modules:
     Common.App
+    Common.I18n
+    Common.Prelude
+    Common.Prelude.Generics
+    Common.Prelude.Orphans
+    Common.Prelude.UUID
     Common.Route
+    Data.Functor.Poly
+    Data.Functor.Dyn
   ghc-options: -Wall -Wredundant-constraints -Wincomplete-uni-patterns -Wincomplete-record-updates -O -fno-show-valid-hole-fits

@@ -1,8 +1,11 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RankNTypes #-}
@@ -19,7 +22,9 @@ import Control.Monad
 import Control.Monad.Fix
 import Control.Monad.IO.Class (MonadIO)
 import qualified Control.Scanl as SL
+import Data.Function (on)
 import Data.Functor.Identity (Identity (..))
+import Data.List (sort, sortBy)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Map.Monoidal (MonoidalMap)
@@ -29,6 +34,10 @@ import Data.Semigroup (First (..), Option (..))
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text as Text
+import Frontend.Common (makeSelectable)
+import Frontend.I18n
+import qualified Frontend.Layout
+import GHC.Generics (Generic)
 import qualified Numeric as T
 import Obelisk.Configs (HasConfigs)
 import Obelisk.Frontend (Frontend (..))
@@ -45,13 +54,29 @@ frontend =
     { _frontend_head = do
         elAttr "meta" ("charset" =: "UTF-8") blank
         elAttr "meta" ("name" =: "viewport" <> "contents" =: "width=device-width, initial-scale=1.0") blank
-        elAttr "link" ("href" =: static @"styles.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") blank
+        elAttr "script" ("src" =: "https://cdn.tailwindcss.com") blank
+        elAttr "style" ("type" =: "text/tailwindcss") $
+          text
+            "@layer base { \
+            \    html {\
+            \        @apply h-full;\
+            \    }\
+            \    body {\
+            \        @apply h-full;\
+            \        @apply overflow-hidden;\
+            \    }\
+            \}"
+        -- elAttr "link" ("href" =: static @"styles.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") blank -- todo: fix packages
         elAttr "script" ("type" =: "module" <> "src" =: static @"bundle.min.js") blank,
       _frontend_body = prerender_ blank . fmap snd . runAppWidget "common/route" $ do
-        divClass "content" $
+        divClass "content h-full" $
           subRoute_ $ \case
-            FrontendRouteMain -> mainView
+            FrontendRouteMain -> withENLocalization mainView
+            FrontendRouteLayout -> withENLocalization Frontend.Layout.main
     }
+
+withENLocalization :: Reflex t => LocalizeT t Locale m a -> m a
+withENLocalization = runLocalize (constDyn Locale_EN)
 
 tshow :: Show a => a -> Text
 tshow = Text.pack . show
@@ -146,6 +171,54 @@ svgBarOfColor offset r' g' b' h = fst <$> svgNamespaceElAttr' "rect" (("width" =
 textToFloat :: Text -> Maybe Float
 textToFloat = readMaybe . T.unpack
 
+data BarOrder = R | G | B | S
+  deriving stock (Eq, Ord, Bounded, Enum, Generic)
+
+instance HasI18n Locale BarOrder Text where
+  localizeWith _ R = "Red"
+  localizeWith _ G = "Green"
+  localizeWith _ B = "Blue"
+  localizeWith _ S = "Size"
+
+-- mainView ::
+--   forall m t.
+--   ( HasApp t m,
+--     DomBuilder t m,
+--     PostBuild t m,
+--     MonadHold t m,
+--     HasLocale t Locale m,
+--     HasI18n Locale BarOrder Text
+--   ) =>
+--   m ()
+-- mainView = divClass "container mx-auto px-4 pt-12" $ do
+--   ss' <- divClass "grid grid-cols-4 gap-2" $ do
+--     replicateM
+--       8
+--       (slider 0 (negate 10) 10)
+
+--   orderD <- divClass "grid grid-cols-4 gap-2" $ do
+--     el "h3" $ text "Sort by"
+--     holdDyn Nothing . fmap Just . leftmost =<< traverse makeSelectable [(minBound :: BarOrder) .. maxBound]
+
+--   let ss = mapMaybe textToFloat <$> distributeListOverDyn ss'
+--   let svgHeight :: Int = 466
+--   let ordSS = zipDyn ss orderD
+--   mbSvg <- divClass "pt-12" $
+--     widgetHold (pure Nothing) $
+--       ffor (updated ordSS) $ \(colors, mbOrder) -> do
+--         let order' = maybe id (\o -> sortBy (flip compare `on` orderBarBy o)) mbOrder
+--         case colors of
+--           [x0, x1, x2, x3, x4, x5, x6, x7] -> do
+--             now' <- getPostBuild
+--             let req = public (PublicRequest_VAE8 (Four (Two x0 x1) (Two x2 x3) (Two x4 x5) (Two x6 x7))) <$ now'
+--             requestingIdentity req
+--           -- widgetHold (pure Nothing) $
+--           --   ffor res $ \case
+--           --     Nothing -> pure Nothing
+--           --     Just fo -> renderBars svgHeight order' fo
+--           _ -> pure Nothing
+--   pure ()
+
 mainView ::
   forall m t.
   ( HasApp t m,
@@ -176,8 +249,22 @@ mainView = divClass "container mx-auto px-4 pt-12" $ do
               Just fo -> void $ svgAttr ("height" =: tshow svgHeight <> "width" =: "100%") $ foldM renderColorRect 0 (scaleToZeroMax (realToFrac svgHeight / 15) $ fmap (fmap (* 0.01)) fo)
         _ -> text "Got more than eight values!"
 
+renderBars ::
+  (DomBuilder t0 m, Show a, Real a) =>
+  a ->
+  (t -> [Four Float]) ->
+  t ->
+  m Float
+renderBars svgHeight order' fo = svgAttr ("height" =: tshow svgHeight <> "width" =: "100%") $ foldM renderColorRect 0 (scaleToZeroMax (realToFrac svgHeight / 15) $ fmap (* 0.01) <$> order' fo)
+
 sizeComponent :: Four a -> a
 sizeComponent (Four _ _ _ s) = s
+
+orderBarBy :: BarOrder -> Four a -> a
+orderBarBy R (Four r _ _ _) = r
+orderBarBy G (Four _ g _ _) = g
+orderBarBy B (Four _ _ b _) = b
+orderBarBy S f = sizeComponent f
 
 modifySize :: (t -> t) -> Four t -> Four t
 modifySize f (Four r g b s) = Four r g b (f s)
