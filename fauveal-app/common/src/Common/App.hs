@@ -12,7 +12,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Common.App where
 
@@ -28,9 +27,10 @@ import Data.Constraint.Extras.TH (deriveArgDict)
 import Data.Distributive (Distributive (collect))
 import Data.Distributive.Generic (genericCollect)
 import Data.Map.Monoidal (MonoidalMap)
+import Data.Monoid (First (..))
 import Data.MonoidMap (MonoidMap)
-import Data.Semigroup (First (..), Option (..))
-import Data.Witherable (Filterable (mapMaybe), Witherable (wither))
+import Data.Semigroup (Option (..))
+import Data.Witherable (Filterable (mapMaybe))
 import GHC.Generics (Generic, Generic1)
 import Reflex.Patch (Additive, Group (negateG))
 import Reflex.Query.Class (Query (QueryResult, crop), SelectedCount (..))
@@ -79,17 +79,6 @@ concat
     ]
 
 deriving instance Show a => Show (PrivateRequest a)
-
--- https://github.com/fumieval/witherable/pull/43
-instance Filterable Option where
-  mapMaybe f = (>>= Option . f)
-  {-# INLINE mapMaybe #-}
-
-instance Witherable Option where
-  wither f (Option x) = Option <$> wither f x
-  {-# INLINE wither #-}
-
-------------------
 
 nullToNothing :: Foldable f => f a -> Maybe (f a)
 nullToNothing a = if null a then Nothing else Just a
@@ -149,7 +138,7 @@ instance (Monoid a) => Query (ViewSelector a) where
       }
 
 newtype View a = View
-  { _view_tasks :: Option (a, MonoidalMap Int (First Int))
+  { _view_tasks :: Option a
   }
   deriving (Eq, Foldable, Functor, Generic, Show)
 
@@ -170,13 +159,5 @@ instance Monoid a => Monoid (View a) where
 instance Filterable View where
   mapMaybe f x =
     View
-      { _view_tasks = mapMaybeView f (_view_tasks x)
+      { _view_tasks = mapMaybe f (_view_tasks x)
       }
-
-mapMaybeView ::
-  forall f v a b.
-  (Filterable f) =>
-  (a -> Maybe b) ->
-  f (a, v) ->
-  f (b, v)
-mapMaybeView f = mapMaybe ((_1 :: (a -> Maybe b) -> (a, v) -> Maybe (b, v)) f)

@@ -25,7 +25,6 @@ import Data.String (IsString)
 import qualified Data.Text as T
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import Numeric.Natural (Natural)
-import Rhyolite.Schema (ShowPretty, showPretty)
 import Text.Printf
 
 -- | A type class capturing internationalization (i18n) for arbitrary @term@s and @locale@s.
@@ -47,11 +46,6 @@ class HasI18n locale term target where
 
 data Locale = Locale_EN | Locale_ZH
   deriving stock (Bounded, Enum, Eq, Ord, Show)
-
-instance ShowPretty Locale where
-  showPretty = \case
-    Locale_EN -> "EN"
-    Locale_ZH -> "ZH"
 
 instance HasI18n Locale Locale Text where
   localizeWith _ Locale_EN = "English"

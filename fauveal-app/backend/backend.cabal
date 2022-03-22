@@ -30,6 +30,7 @@ library
     , monad-logger
     , monoidal-containers           >=0.6
     , random
+    , rhyolite-notify-listen
     , rhyolite-backend
     , rhyolite-common
     , dependent-sum-template

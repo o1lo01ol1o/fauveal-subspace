@@ -49,20 +49,20 @@ type MonadAppWidget t m = MonadRhyoliteWidget (ViewSelector SelectedCount) (Cons
 
 type MonadAppFrontendWidget t m = MonadRhyoliteFrontendWidget (ViewSelector SelectedCount) (Const ()) t m
 
-type UI js t m =
+type UI t m =
   ( MonadHold t m,
     TriggerEvent t m,
     PerformEvent t m,
     DomBuilder t m,
     PostBuild t m,
-    Prerender js t m,
+    Prerender t m,
     MonadFix m,
     Reflex t
   )
 
-type AppUI js e t m =
-  ( UI js t m,
-    Prerender js t m,
+type AppUI e t m =
+  ( UI t m,
+    Prerender t m,
     PostBuild t m,
     MonadReader e m,
     PerformEvent t m,
@@ -240,7 +240,7 @@ template = id
 -- | Add a standard back button and page title, where the page may
 -- switch to a subsequent workflow.
 wrapBack ::
-  (UI js t m, Prerender js t m) =>
+  (UI t m) =>
   -- | Back event
   Event t () ->
   -- | Back button target
@@ -256,7 +256,7 @@ wrapBack back x m = Workflow $
 -- | Add a standard back button returning a give a, and page title, where the page may
 -- switch to a subsequent workflow.
 wrapBackWith ::
-  (UI js t m, Prerender js t m) =>
+  (UI t m) =>
   a ->
   -- | Back event
   m (Event t ()) ->
@@ -274,7 +274,7 @@ wrapBackWith last' back x m = Workflow $
 -- | Add a standard back button and page title, where the only option
 -- is to go back.
 wrapBack' ::
-  (UI js t m, Prerender js t m) =>
+  (UI t m) =>
   -- | Back event
   Event t () ->
   -- | Back button target
@@ -467,7 +467,7 @@ pureEvent = updated . constDyn
 makeToggleable ::
   ( MonadWidget t f,
     MonadAppWidget t f,
-    AppUI js e t f,
+    AppUI e t f,
     HasI18n Locale term Text
   ) =>
   term ->
@@ -518,7 +518,7 @@ errorAlert = coloredAlert "red"
 dynTextErrorAlert_,
   dynTextWarnAlert_,
   dynTextNoteAlert_ ::
-    ( AppUI js e t m,
+    ( AppUI e t m,
       MonadWidget t m,
       MonadAppWidget t m,
       HasI18n Locale term Text

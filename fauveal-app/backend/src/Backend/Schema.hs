@@ -31,8 +31,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Database.PostgreSQL.Simple as Pg
 import qualified Gargoyle.PostgreSQL.Connect as Gargoyle
-import Rhyolite.Backend.Listen (DbNotification (..), NotificationType (..), notifyChannel)
-import Rhyolite.Schema (SchemaName (..))
+import Rhyolite.Backend.App
 
 withDb :: MonadIO m => (Pool Pg.Connection -> IO a) -> m a
 withDb f = liftIO $

@@ -1,7 +1,7 @@
 {
-    "owner": "BeFunctional",
-    "repo": "rhyolite",
-    "branch": "bump-vessel",
-    "rev": "e1c044cf56187bce85a65c6797cad5c7f90671ff",
-    "sha256": "10w4nrdaqablm26l1281bg906gnh96493gd052h8j65wc5j2qps2"
-  }
+  "owner": "obsidiansystems",
+  "repo": "rhyolite",
+  "branch": "develop",
+  "rev": "1c3bd4253e946a786a51a8b4a620c6356e04717d",
+  "sha256": "0AENXGe09ZLLoYpj43znqNRi48nDZCgOZMRNvGwxP54="
+}

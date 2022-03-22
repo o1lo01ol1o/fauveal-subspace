@@ -93,8 +93,6 @@ import Reflex.Dom.Core
     DomRenderHook,
     DomSpace (RawDocument),
     HasDocument (..),
-    HasJS (..),
-    HasJSContext (..),
     Prerender (..),
     TextNodeConfig
       ( TextNodeConfig,
@@ -134,7 +132,7 @@ deriving newtype instance (TriggerEvent t m) => TriggerEvent t (LocalizeT t loca
 
 deriving newtype instance (SetRoute t r m, Monad m) => SetRoute t r (LocalizeT t locale m)
 
-instance Prerender js t m => Prerender js t (LocalizeT t locale m) where
+instance Prerender t m => Prerender t (LocalizeT t locale m) where
   type Client (LocalizeT t locale m) = LocalizeT t locale (Client m)
   prerender server client = LocalizeT $
     ReaderT $ \d ->
@@ -231,17 +229,9 @@ instance
   where
   askDocument = lift askDocument
 
-instance HasJSContext m => HasJSContext (LocalizeT t locale m) where
-  type JSContextPhantom (LocalizeT t locale m) = JSContextPhantom m
-  askJSContext = LocalizeT askJSContext
-
 #ifndef ghcjs_HOST_OS
 instance MonadJSM m => MonadJSM (LocalizeT t locale m)
 #endif
-
-instance HasJS x m => HasJS x (LocalizeT t locale m) where
-  type JSX (LocalizeT t locale m) = JSX m
-  liftJS = lift . liftJS
 
 deriving instance HasLocale t locale m => HasLocale t locale (RequesterT t request response m)
 
@@ -260,7 +250,7 @@ deriving instance HasLocale t locale m => HasLocale t locale (WithJSContextSingl
 -- | Runs an action that is locale-aware using the given 'Dynamic t locale' as the time-varying locale.
 --
 -- WARNING: The given 'Dynamic' must be strict as it will be immediately sampled by some widgets.
-runLocalize :: Reflex t => Dynamic t locale -> LocalizeT t locale m a -> m a
+runLocalize :: Dynamic t locale -> LocalizeT t locale m a -> m a
 runLocalize locale (LocalizeT act) = runReaderT act locale
 
 -- | Renders an internationalizable term as simple @Text@ in a known locale.

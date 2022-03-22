@@ -9,10 +9,13 @@ import Common.App (View (..), ViewSelector (..))
 import Data.Functor.Identity
 import qualified Data.Map.Monoidal as MMap
 import Data.Semigroup
-import Rhyolite.Backend.Listen (DbNotification (..))
+import Rhyolite.Backend.App
+import Rhyolite.DB.NotifyListen
+  ( DbNotification (_dbNotification_message),
+  )
 
 notifyHandler :: forall a. Monoid a => (forall x. (forall mode. Transaction mode x) -> IO x) -> DbNotification Notification -> ViewSelector a -> IO (View a)
-notifyHandler _runTransaction msg vs = mempty
+notifyHandler _ msg vs = mempty
 
 -- case _dbNotification_message msg of
 -- Notification_AddTask :=> Identity task ->

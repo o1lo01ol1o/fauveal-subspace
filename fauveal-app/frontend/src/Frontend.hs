@@ -10,6 +10,7 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Frontend where
@@ -20,32 +21,23 @@ import qualified Control.Foldl as L
 import Control.Lens
 import Control.Monad
 import Control.Monad.Fix
-import Control.Monad.IO.Class (MonadIO)
-import qualified Control.Scanl as SL
-import Data.Function (on)
 import Data.Functor.Identity (Identity (..))
-import Data.List (sort, sortBy)
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Map.Monoidal (MonoidalMap)
-import qualified Data.Map.Monoidal as MMap
 import Data.Maybe (fromMaybe)
-import Data.Semigroup (First (..), Option (..))
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text as Text
-import Frontend.Common (makeSelectable)
 import Frontend.I18n
 import qualified Frontend.Layout
 import GHC.Generics (Generic)
-import qualified Numeric as T
 import Obelisk.Configs (HasConfigs)
 import Obelisk.Frontend (Frontend (..))
 import Obelisk.Generated.Static
 import Obelisk.Route.Frontend
 import Reflex.Dom.Core
 import Rhyolite.Api (ApiRequest, public)
-import Rhyolite.Frontend.App (AppWebSocket, RhyoliteWidget, functorToWire, runObeliskRhyoliteWidget, watchViewSelector)
+import Rhyolite.Frontend.App (AppWebSocket, RhyoliteWidget, functorToWire, runObeliskRhyoliteWidget)
 import Text.Read (readMaybe)
 
 frontend :: Frontend (R FrontendRoute)
@@ -67,7 +59,7 @@ frontend =
             \    }\
             \}"
         -- elAttr "link" ("href" =: static @"styles.css" <> "type" =: "text/css" <> "rel" =: "stylesheet") blank -- todo: fix packages
-        elAttr "script" ("type" =: "module" <> "src" =: static @"bundle.min.js") blank,
+        elAttr "script" ("type" =: "module" <> "src" =: $(static "bundle.min.js")) blank,
       _frontend_body = prerender_ blank . fmap snd . runAppWidget "common/route" $ do
         divClass "content h-full" $
           subRoute_ $ \case
@@ -309,7 +301,7 @@ runAppWidget ::
     MonadHold t m,
     PostBuild t m,
     MonadFix m,
-    Prerender x t m
+    Prerender t m
   ) =>
   Text ->
   RoutedT t (R FrontendRoute) (RhyoliteWidget (ViewSelector SelectedCount) (ApiRequest () PublicRequest PrivateRequest) t m) a ->

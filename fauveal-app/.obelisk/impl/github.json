@@ -1,8 +1,8 @@
 {
-  "owner": "befunctional",
+  "owner": "Befunctional",
   "repo": "obelisk",
-  "branch": "bump-reflex-dom",
+  "branch": "fix-deploy",
   "private": false,
-  "rev": "1bc946bef0a0696cdcf70b549af2cd690dabcead",
-  "sha256": "0zv90bh2afw1q4h3ilmz2v2vxmjph90jaks2k3lvlqwkvln6mgw0"
+  "rev": "9547b6211eac4e674d23674e75fe3057a0e1c17a",
+  "sha256": "0wza8nw29fchhfs6ns7hwylgixzxplp68cl5x9plzw3k50m0b116"
 }

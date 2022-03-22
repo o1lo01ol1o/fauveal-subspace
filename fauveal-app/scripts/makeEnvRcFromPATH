@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+eval "ob shell -- echo "export PATH=$(echo $PATH)" > .envrc "

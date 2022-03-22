@@ -11,6 +11,7 @@ import Backend.RequestHandler (requestHandler)
 import Backend.Schema (withDb)
 import Backend.Transaction (Transaction, runTransaction)
 import Backend.ViewSelectorHandler (viewSelectorHandler)
+import Common.Prelude (coerce)
 import Common.Route (BackendRoute (..), FrontendRoute, fullRouteEncoder)
 import Control.Exception.Safe (finally)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -38,7 +39,7 @@ backendRun serve = withDb $ \dbPool -> do
       runTransaction' = runTransaction env
   (handleListen, wsFinalizer) <-
     RhyoliteApp.serveDbOverWebsockets
-      (RhyoliteApp.convertPostgresPool dbPool)
+      (coerce dbPool)
       (requestHandler runTransaction')
       (notifyHandler runTransaction')
       (RhyoliteApp.QueryHandler $ viewSelectorHandler runTransaction')

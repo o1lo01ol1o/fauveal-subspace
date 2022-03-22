@@ -33,13 +33,13 @@ library
     , fin
     , lens
     , monoidal-containers
+    , monoid-map
     , monad-control
     , mtl
     , obelisk-route
     , random
     , reflex
     , reflex-dom-core
-    , rhyolite-aeson-orphans
     , rhyolite-common
     , semialign
     , semigroups
@@ -52,7 +52,7 @@ library
     , transformers-base
     , universe
     , universe-base
-    , uuid-types
+    -- , uuid-types
     , vec
     , witherable
   exposed-modules:
